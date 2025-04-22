@@ -1,67 +1,80 @@
 package com.envios.envios.model;
 
-public class Envio {
-    private String id;
-    private String cliente;
-    private String origen;
-    private String destino;
-    private EstadoEnvio estado;
-    private Ubicacion ubicacion;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 
-    public Envio(String id, String cliente, String origen, String destino, EstadoEnvio estado, Ubicacion ubicacion) {
-        this.id = id;
-        this.cliente = cliente;
-        this.origen = origen;
-        this.destino = destino;
-        this.estado = estado;
-        this.ubicacion = ubicacion;
+@Entity
+@Table(name = "Envio")
+public class Envio {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotNull(message = "El aeropuerto de origen es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "origen", nullable = false)
+    private Aeropuerto origen;
+
+    @NotNull(message = "El aeropuerto de destino es obligatorio")
+    @ManyToOne
+    @JoinColumn(name = "destino", nullable = false)
+    private Aeropuerto destino;
+
+    @Column(length = 500)
+    private String descripcion;
+
+    // Constructores
+    public Envio() {
     }
 
-    public String getId() {
+    public Envio(Aeropuerto origen, Aeropuerto destino, String descripcion) {
+        this.origen = origen;
+        this.destino = destino;
+        this.descripcion = descripcion;
+    }
+
+    // Getters y Setters
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public String getCliente() {
-        return cliente;
-    }
-
-    public void setCliente(String cliente) {
-        this.cliente = cliente;
-    }
-
-    public String getOrigen() {
+    public Aeropuerto getOrigen() {
         return origen;
     }
 
-    public void setOrigen(String origen) {
+    public void setOrigen(Aeropuerto origen) {
         this.origen = origen;
     }
 
-    public String getDestino() {
+    public Aeropuerto getDestino() {
         return destino;
     }
 
-    public void setDestino(String destino) {
+    public void setDestino(Aeropuerto destino) {
         this.destino = destino;
     }
 
-    public EstadoEnvio getEstado() {
-        return estado;
+    public String getDescripcion() {
+        return descripcion;
     }
 
-    public void setEstado(EstadoEnvio estado) {
-        this.estado = estado;
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 
-    public Ubicacion getUbicacion() {
-        return ubicacion;
-    }
-
-    public void setUbicacion(Ubicacion ubicacion) {
-        this.ubicacion = ubicacion;
+    // toString
+    @Override
+    public String toString() {
+        return "Envio{" +
+                "id=" + id +
+                ", origen=" + origen.getId() +
+                ", destino=" + destino.getId() +
+                ", descripcion='" + descripcion + '\'' +
+                '}';
     }
 }
