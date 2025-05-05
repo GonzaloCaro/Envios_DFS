@@ -23,8 +23,8 @@ public class AeropuertoService {
         log.debug("Obteniendo todos los aeropuertos");
         List<Aeropuerto> aeropuertos = aeropuertoRepository.findAll();
         if (aeropuertos.isEmpty()) {
-            log.error("No se encontraron aeropuertos ");
-            throw new ResourceNotFoundException("No se encontraron aeropuertos ");
+            log.error("No se encontraron aeropuertos");
+            throw new ResourceNotFoundException("No se encontraron aeropuertos");
         }
         log.debug("Se encontraron {} aeropuertos", aeropuertos.size());
         return aeropuertos;
