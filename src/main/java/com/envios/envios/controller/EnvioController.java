@@ -13,6 +13,14 @@ import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+//
+
+import com.envios.envios.hateoas.EnvioModelAssembler;
+import jakarta.validation.Valid;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import java.util.stream.Collectors;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @Slf4j
 @RestController
@@ -21,14 +29,17 @@ public class EnvioController {
 
     private final EnvioService envioService;
     private final EnvioMapper envioMapper;
+    private final EnvioModelAssembler envioModelAssembler;
 
-    public EnvioController(EnvioService envioService, EnvioMapper envioMapper) {
+    public EnvioController(EnvioService envioService, EnvioMapper envioMapper,
+            EnvioModelAssembler envioModelAssembler) {
         this.envioService = envioService;
         this.envioMapper = envioMapper;
+        this.envioModelAssembler = envioModelAssembler;
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllEnvios() {
+    public ResponseEntity<CollectionModel<EntityModel<EnvioDTO>>> getAllEnvios() {
         log.debug("Controller: Obteniendo todos los envíos");
         List<Envio> envios = envioService.getAllEnvios();
         if (envios.isEmpty()) {
@@ -36,15 +47,19 @@ public class EnvioController {
             throw new ResourceNotFoundException("No se encontraron envíos");
         }
         log.debug("Controller: Se encontraron {} envíos", envios.size());
+
+        List<EntityModel<EnvioDTO>> envioModels = envios.stream()
+                .map(envioMapper::toDto)
+                .map(envioModelAssembler::toModel)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(
-                new ResponseWrapper<>(
-                        "OK",
-                        envios.size(),
-                        envios));
+                CollectionModel.of(envioModels,
+                        linkTo(methodOn(EnvioController.class).getAllEnvios()).withSelfRel()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getEnvioById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<EnvioDTO>> getEnvioById(@PathVariable Long id) {
         log.debug("Controller: Obteniendo envío con id: {}", id);
         if (id == null) {
             log.error("Controller: ID de envío no puede ser nulo");
@@ -52,7 +67,8 @@ public class EnvioController {
         }
         try {
             Envio envio = envioService.getEnvioById(id);
-            return ResponseEntity.ok(envio);
+            return ResponseEntity.ok(
+                    envioModelAssembler.toModel(envioMapper.toDto(envio)));
         } catch (ResourceNotFoundException e) {
             log.error("Controller: Envío no encontrado con id: {}", id);
             throw e; // Será manejado por GlobalExceptionHandler
@@ -60,7 +76,7 @@ public class EnvioController {
     }
 
     @PostMapping
-    public ResponseEntity<ResponseWrapper<Envio>> createEnvio(@RequestBody EnvioDTO envioDTO) {
+    public ResponseEntity<EntityModel<EnvioDTO>> createEnvio(@Valid @RequestBody EnvioDTO envioDTO) {
         log.debug("Controller: Creando nuevo envío");
         if (envioDTO == null) {
             log.error("Controller: Envío no puede ser nulo");
@@ -71,10 +87,7 @@ public class EnvioController {
             Envio createdEnvio = envioService.createEnvio(envio);
             return ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(new ResponseWrapper<>(
-                            "Envío creado exitosamente",
-                            1,
-                            List.of(createdEnvio)));
+                    .body(envioModelAssembler.toModel(envioMapper.toDto(createdEnvio)));
         } catch (RuntimeException e) {
             log.error("Controller: Error al crear el envío: {}", e.getMessage());
             throw e; // Será manejado por GlobalExceptionHandler
@@ -82,7 +95,8 @@ public class EnvioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateEnvio(@PathVariable Long id, @RequestBody EnvioDTO envioDTO) {
+    public ResponseEntity<EntityModel<EnvioDTO>> updateEnvio(@Valid @PathVariable Long id,
+            @RequestBody EnvioDTO envioDTO) {
         log.debug("Controller: Actualizando envío con id: {}", id);
         if (id == null) {
             log.error("Controller: ID de envío no puede ser nulo");
@@ -100,7 +114,7 @@ public class EnvioController {
 
             log.debug("Controller: Envío con id: {} actualizado exitosamente", id);
             // Retornar la respuesta
-            return ResponseEntity.ok(responseDto);
+            return ResponseEntity.ok(envioModelAssembler.toModel(responseDto));
         } catch (ResourceNotFoundException | IllegalArgumentException e) {
             throw e; // Será manejado por GlobalExceptionHandler
         }
