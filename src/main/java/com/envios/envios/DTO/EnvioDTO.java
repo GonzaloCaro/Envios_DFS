@@ -3,6 +3,9 @@ package com.envios.envios.DTO;
 import jakarta.validation.constraints.*;
 
 public class EnvioDTO {
+
+    private Long id;
+
     @NotNull(message = "El ID del aeropuerto origen es obligatorio")
     private Long origenId;
 
@@ -12,6 +15,15 @@ public class EnvioDTO {
     private String descripcion;
 
     // Getters y Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Long getOrigenId() {
         return origenId;
     }
